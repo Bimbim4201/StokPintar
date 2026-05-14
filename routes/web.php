@@ -3,26 +3,28 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 
-// Halaman utama: Menggunakan redirect statis agar bisa di-cache oleh Railway
+// 1. Gunakan redirect sederhana (Tanpa function closure agar bisa di-cache)
 Route::redirect('/', '/dashboard');
 
-// Semua route di bawah ini hanya bisa diakses jika sudah Login
+// 2. Semua rute di dalam grup middleware auth
 Route::middleware(['auth'])->group(function () {
-    // Route dashboard
+    
+    // Dashboard
     Route::get('/dashboard', [ProductController::class, 'dashboard'])->name('dashboard');
     
-    // Resource route otomatis menghandle index, create, store, edit, update, destroy
-    // Pastikan tidak ada Route::get('/products') manual lainnya agar tidak bentrok
+    // Resource rute (HANYA SATU INI SAJA untuk urusan produk)
+    // Otomatis mencakup: products.index, products.create, products.store, dll.
     Route::resource('products', ProductController::class);
     
+    // Laporan & Fitur lainnya
     Route::get('/reports', [ProductController::class, 'reports'])->name('reports');
     Route::get('/notifications', [ProductController::class, 'notifications'])->name('notifications');
     Route::get('/exports', [ProductController::class, 'exports'])->name('exports');
     
-    // Fitur Download CSV
-    Route::get('/export/products', [ProductController::class, 'exportProducts']);
-    Route::get('/export/transactions', [ProductController::class, 'exportTransactions']);
-    Route::get('/export/low-stock', [ProductController::class, 'exportLowStock']);
+    // Fitur Download CSV (Gunakan prefix /export agar tidak bentrok dengan resource)
+    Route::get('/export-csv/products', [ProductController::class, 'exportProducts'])->name('export.products');
+    Route::get('/export-csv/transactions', [ProductController::class, 'exportTransactions'])->name('export.transactions');
+    Route::get('/export-csv/low-stock', [ProductController::class, 'exportLowStock'])->name('export.lowstock');
 });
 
 require __DIR__.'/auth.php';
