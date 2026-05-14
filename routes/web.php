@@ -3,28 +3,23 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 
-// 1. Gunakan redirect sederhana (Tanpa function closure agar bisa di-cache)
-Route::redirect('/', '/dashboard');
+// Halaman utama: jika sudah login ke dashboard, jika belum ke halaman login
+Route::get('/', function () {
+    return auth()->check() ? redirect('/dashboard') : redirect('/login');
+});
 
-// 2. Semua rute di dalam grup middleware auth
+// Semua route di bawah ini hanya bisa diakses jika sudah Login
 Route::middleware(['auth'])->group(function () {
-    
-    // Dashboard
     Route::get('/dashboard', [ProductController::class, 'dashboard'])->name('dashboard');
-    
-    // Resource rute (HANYA SATU INI SAJA untuk urusan produk)
-    // Otomatis mencakup: products.index, products.create, products.store, dll.
     Route::resource('products', ProductController::class);
+    Route::get('/reports', [ProductController::class, 'reports']);
+    Route::get('/notifications', [ProductController::class, 'notifications']);
+    Route::get('/exports', [ProductController::class, 'exports']);
     
-    // Laporan & Fitur lainnya
-    Route::get('/reports', [ProductController::class, 'reports'])->name('reports');
-    Route::get('/notifications', [ProductController::class, 'notifications'])->name('notifications');
-    Route::get('/exports', [ProductController::class, 'exports'])->name('exports');
-    
-    // Fitur Download CSV (Gunakan prefix /export agar tidak bentrok dengan resource)
-    Route::get('/export-csv/products', [ProductController::class, 'exportProducts'])->name('export.products');
-    Route::get('/export-csv/transactions', [ProductController::class, 'exportTransactions'])->name('export.transactions');
-    Route::get('/export-csv/low-stock', [ProductController::class, 'exportLowStock'])->name('export.lowstock');
+    // Fitur Download CSV
+    Route::get('/export/products', [ProductController::class, 'exportProducts']);
+    Route::get('/export/transactions', [ProductController::class, 'exportTransactions']);
+    Route::get('/export/low-stock', [ProductController::class, 'exportLowStock']);
 });
 
 require __DIR__.'/auth.php';
